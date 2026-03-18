@@ -1,0 +1,1 @@
+import axios from 'axios'; import Constants from 'expo-constants'; const apiUrl = Constants.expoConfig?.extra?.apiUrl || 'http://10.0.2.2:8000'; const api = axios.create({ baseURL: apiUrl, headers: {'Content-Type': 'application/json'} }); export default api;
