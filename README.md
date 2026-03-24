@@ -60,7 +60,7 @@
 
 | Layer | Technology |
 |-------|-----------|
-| **AI Engine** | Google Gemini 2.0 Flash (`google-generativeai`) |
+| **AI Engine** | Google Gemini 2.5 Flash (`google-generativeai`) |
 | **Backend** | Python 3.11+, FastAPI, Uvicorn |
 | **Database** | SQLite via SQLAlchemy ORM |
 | **Real-time** | WebSocket (`/ws/alerts`) |
