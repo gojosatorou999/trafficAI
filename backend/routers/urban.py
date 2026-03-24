@@ -83,12 +83,13 @@ async def get_risk_scores(db: Session = Depends(get_db)):
         except json.JSONDecodeError:
             factors = []
 
-        # Find intersection name from known list
-        intersection_name = ""
-        for inter in CHENNAI_INTERSECTIONS:
-            if abs(inter["lat"] - s.lat) < 0.001 and abs(inter["lng"] - s.lng) < 0.001:
-                intersection_name = inter["name"]
-                break
+        # Use intersection_name from model if available, fallback to lookup
+        intersection_name = getattr(s, 'intersection_name', None) or ""
+        if not intersection_name:
+            for inter in CHENNAI_INTERSECTIONS:
+                if abs(inter["lat"] - s.lat) < 0.001 and abs(inter["lng"] - s.lng) < 0.001:
+                    intersection_name = inter["name"]
+                    break
 
         result.append({
             "id": s.id,

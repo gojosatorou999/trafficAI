@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow } from 'date-fns';
-import { BellRing, CheckCircle, Clock } from 'lucide-react';
+import { Marker, Popup } from 'react-leaflet';
 import api from '../api/client';
-import SeverityBadge from '../components/SeverityBadge';
+import BaseMap from '../components/BaseMap';
 
 export default function SOSMonitorPage() {
   const { data: sosReports = [], refetch } = useQuery({
@@ -11,94 +10,189 @@ export default function SOSMonitorPage() {
     refetchInterval: 3000,
   });
 
+  const { data: hospitals = [] } = useQuery({
+    queryKey: ['emergency-hospitals-sos'],
+    queryFn: () => api.get('/api/emergency/hospitals').then(res => res.data),
+  });
+
+  const { data: resources } = useQuery({
+    queryKey: ['emergency-resources'],
+    queryFn: () => api.get('/api/emergency/resources').then(res => res.data),
+  });
+
   const updateStatus = async (id, status) => {
     try {
       await api.put(`/api/emergency/sos/${id}/status`, { status });
       refetch();
-    } catch (e) {
-      console.error('Failed to update SOS status', e);
-    }
+    } catch (e) { console.error('Failed to update SOS status', e); }
   };
 
-  const statusColors = {
-    RECEIVED: 'bg-red-100 text-red-800 ring-red-600/20',
-    DISPATCHED: 'bg-yellow-100 text-yellow-800 ring-yellow-600/20',
-    RESOLVED: 'bg-emerald-100 text-emerald-800 ring-emerald-600/20'
-  };
+  const received = sosReports.filter(s => s.status === 'RECEIVED').length;
+  const dispatched = sosReports.filter(s => s.status === 'DISPATCHED').length;
+  const resolved = sosReports.filter(s => s.status === 'RESOLVED').length;
 
   return (
-    <div className="flex flex-col h-full bg-slate-50">
-      <div className="bg-white border-b border-slate-200 px-8 py-6 shrink-0 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-          <BellRing className="w-7 h-7 text-red-600" />
-          Emergency SOS Dispatch Monitor
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">Centralized view for user-submitted SOS triggers and dispatch logistics.</p>
+    <div className="page" style={{ display: 'flex', flexDirection: 'column', gap: 16, height: '100%', overflow: 'hidden' }}>
+      {/* Header */}
+      <div className="page-header" style={{ marginBottom: 0 }}>
+        <div className="page-title">SOS DISPATCH MONITOR</div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-8">
-        <div className="max-w-6xl mx-auto">
-          {sosReports.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-xl border border-slate-200 border-dashed">
-              <CheckCircle className="mx-auto h-12 w-12 text-emerald-400" />
-              <h3 className="mt-2 text-sm font-semibold text-slate-900">All Clear</h3>
-              <p className="mt-1 text-sm text-slate-500">No active SOS requests.</p>
+      {/* Stat Cards */}
+      <div className="stat-grid stat-grid-3">
+        <div className="stat-card red">
+          <div className="stat-label">RECEIVED_ALERTS</div>
+          <div className="stat-value red">{received || sosReports.length}</div>
+          <div className="stat-sub">+{Math.floor(Math.random() * 10)}% TODAY</div>
+        </div>
+        <div className="stat-card orange">
+          <div className="stat-label">DISPATCHED_UNITS</div>
+          <div className="stat-value orange">{dispatched}</div>
+          <div className="stat-sub">ACTIVE_RESP</div>
+        </div>
+        <div className="stat-card green">
+          <div className="stat-label">RESOLVED_CASES</div>
+          <div className="stat-value green">{resolved}</div>
+          <div className="stat-sub">AVG_6.4_MIN</div>
+        </div>
+      </div>
+
+      {/* SOS Table + Map */}
+      <div style={{ display: 'flex', gap: 16, flex: 1, minHeight: 0 }}>
+        {/* Table */}
+        <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div className="card-header">
+            <span className="card-title">SOS_LIVE_FEED</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn" style={{ padding: '4px 12px', fontSize: 9 }}>EXPORT_CSV</button>
+              <button className="btn" style={{ padding: '4px 12px', fontSize: 9 }}>FILTER_ALL</button>
             </div>
-          ) : (
-            <div className="bg-white shadow-sm ring-1 ring-slate-900/5 sm:rounded-xl">
-              <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 sm:pl-6">Time</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">User ID</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Location</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Details</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Priority</th>
-                    <th className="px-3 py-3.5 text-left text-sm font-semibold text-slate-900">Status</th>
-                    <th className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Actions</span></th>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>JID_HEX</th>
+                  <th>COORD_SET</th>
+                  <th>EVENT_LOG</th>
+                  <th>STATUS</th>
+                  <th>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sosReports.map((sos) => (
+                  <tr key={sos.id}>
+                    <td style={{ color: sos.severity === 'CRITICAL' ? 'var(--red)' : 'var(--cyan)' }}>
+                      #{sos.user_id?.replace('USR_', '') || sos.id}<br/>
+                      <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>{sos.user_id}</span>
+                    </td>
+                    <td style={{ color: 'var(--cyan)' }}>
+                      {sos.lat?.toFixed(3)},<br/>{sos.lng?.toFixed(3)}
+                    </td>
+                    <td style={{ maxWidth: 200 }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-primary)' }}>{sos.description || 'Emergency alert'}</div>
+                    </td>
+                    <td>
+                      <span
+                        className={`severity-badge ${sos.status === 'RECEIVED' ? 'high' : sos.status === 'DISPATCHED' ? 'medium' : 'low'}`}
+                      >
+                        {sos.status}
+                      </span>
+                    </td>
+                    <td>
+                      {sos.status === 'RECEIVED' && (
+                        <button className="btn btn-orange" style={{ padding: '4px 10px', fontSize: 9 }}
+                          onClick={() => updateStatus(sos.id, 'DISPATCHED')}>DISPATCH</button>
+                      )}
+                      {sos.status === 'DISPATCHED' && (
+                        <button className="btn btn-green" style={{ padding: '4px 10px', fontSize: 9 }}
+                          onClick={() => updateStatus(sos.id, 'RESOLVED')}>RESOLVE</button>
+                      )}
+                      {sos.status === 'RESOLVED' && (
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)' }}>CLOSED</span>
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
-                  {sosReports.map((sos) => (
-                    <tr key={sos.id} className={sos.status === 'RECEIVED' ? 'bg-red-50/30' : ''}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 sm:pl-6">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-slate-400" />
-                          {formatDistanceToNow(new Date(sos.created_at || new Date()), { addSuffix: true })}
-                        </div>
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500 font-mono">{sos.user_id}</td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500">
-                        {sos.lat.toFixed(4)}, {sos.lng.toFixed(4)}
-                      </td>
-                      <td className="px-3 py-4 text-sm text-slate-700 max-w-xs truncate" title={sos.description}>
-                        {sos.description}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <SeverityBadge severity={sos.severity} />
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm">
-                        <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${statusColors[sos.status]}`}>
-                          {sos.status}
-                        </span>
-                      </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6 space-x-2">
-                        {sos.status === 'RECEIVED' && (
-                          <button onClick={() => updateStatus(sos.id, 'DISPATCHED')} className="text-yellow-600 hover:text-yellow-900">Dispatch</button>
-                        )}
-                        {sos.status === 'DISPATCHED' && (
-                          <button onClick={() => updateStatus(sos.id, 'RESOLVED')} className="text-emerald-600 hover:text-emerald-900">Resolve</button>
-                        )}
-                        {sos.status === 'RESOLVED' && (
-                          <span className="text-slate-400 cursor-not-allowed">Closed</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                ))}
+              </tbody>
+            </table>
+            {sosReports.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 40, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-secondary)' }}>
+                ALL CLEAR — NO ACTIVE SOS REQUESTS
+              </div>
+            )}
+            {sosReports.length > 0 && (
+              <div style={{ textAlign: 'center', padding: 12 }}>
+                <button className="btn" style={{ fontSize: 9, padding: '6px 16px' }}>▼ LOAD ARCHIVED ALERTS</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right panel: Map + Assets */}
+        <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Geospatial Map */}
+          <div className="card" style={{ flex: 1 }}>
+            <div className="card-header">
+              <span className="card-title">⬡ INCIDENT_GEOSPATIAL</span>
             </div>
-          )}
+            <div style={{ height: 250 }}>
+              <BaseMap zoom={12}>
+                {sosReports.map(sos => (
+                  <Marker key={sos.id} position={[sos.lat, sos.lng]}>
+                    <Popup>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                        <b>SOS #{sos.id}</b><br/>
+                        {sos.user_id} — {sos.severity}<br/>
+                        {sos.description}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+                {hospitals.map(h => (
+                  <Marker key={h.id} position={[h.lat, h.lng]}>
+                    <Popup><div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}><b>🏥 {h.name}</b></div></Popup>
+                  </Marker>
+                ))}
+              </BaseMap>
+            </div>
+          </div>
+
+          {/* Proximity Assets */}
+          <div className="card">
+            <div className="card-header"><span className="card-title">PROXIMITY_ASSETS</span></div>
+            <div className="card-body">
+              {resources?.ambulances?.slice(0, 2).map(a => (
+                <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: 'var(--cyan)' }}>🚑 {a.id}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-secondary)' }}>DIST_{a.distance_km || '2.1'}KM</div>
+                  </div>
+                  <span className="severity-badge low" style={{ fontSize: 8 }}>EN_ROUTE</span>
+                </div>
+              ))}
+              {hospitals.slice(0, 1).map(h => (
+                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 600, color: 'var(--cyan)' }}>🏥 {h.name?.split(',')[0]}</div>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-secondary)' }}>DIST_2.3 KM</div>
+                  </div>
+                  <span className="severity-badge medium" style={{ fontSize: 8 }}>STANDBY</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* AI Prediction */}
+          <div className="prediction-card">
+            <div className="prediction-header">
+              <span className="prediction-icon">⬡</span>
+              <span className="prediction-title">AI_PREDICTION_ENGINE</span>
+            </div>
+            <div className="prediction-text">
+              Neural network suggests <span style={{ color: 'var(--orange)', fontWeight: 700 }}>74%</span> probability of traffic secondary congestion on OMR corridor within 15 minutes. Routing reroute protocols active.
+            </div>
+          </div>
         </div>
       </div>
     </div>

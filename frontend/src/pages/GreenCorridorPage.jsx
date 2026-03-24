@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Marker, Popup, Polyline } from 'react-leaflet';
-import { Activity, Clock, MoreHorizontal, Power, CheckCircle2 } from 'lucide-react';
 import api from '../api/client';
 import BaseMap from '../components/BaseMap';
 
@@ -11,14 +10,12 @@ export default function GreenCorridorPage() {
   const [isActivating, setIsActivating] = useState(false);
   const [activePlan, setActivePlan] = useState(null);
 
-  // Poll signals
   const { data: signals = [], refetch: refetchSignals } = useQuery({
     queryKey: ['emergency-signals'],
     queryFn: () => api.get('/api/emergency/signals').then(res => res.data),
     refetchInterval: 3000,
   });
 
-  // Fetch hospitals for dropdown
   const { data: hospitals = [] } = useQuery({
     queryKey: ['emergency-hospitals'],
     queryFn: () => api.get('/api/emergency/hospitals').then(res => res.data),
@@ -28,27 +25,19 @@ export default function GreenCorridorPage() {
     if (!origin || !destination) return;
     setIsActivating(true);
     try {
-      // Mock origin coordinates (Ambulance in T Nagar)
       const originLat = 13.0418;
       const originLng = 80.2341;
-      
       const targetHosp = hospitals.find(h => h.id.toString() === destination);
       if (!targetHosp) return;
 
       const res = await api.post('/api/emergency/green-corridor', {
-        ambulance_lat: originLat,
-        ambulance_lng: originLng,
-        hospital_lat: targetHosp.lat,
-        hospital_lng: targetHosp.lng,
+        ambulance_lat: originLat, ambulance_lng: originLng,
+        hospital_lat: targetHosp.lat, hospital_lng: targetHosp.lng,
       });
-      
       setActivePlan(res.data);
       refetchSignals();
-    } catch (e) {
-      console.error('Failed to activate corridor', e);
-    } finally {
-      setIsActivating(false);
-    }
+    } catch (e) { console.error('Failed to activate corridor', e); }
+    finally { setIsActivating(false); }
   };
 
   const handleReset = async () => {
@@ -59,164 +48,149 @@ export default function GreenCorridorPage() {
     refetchSignals();
   };
 
-  // Convert route into Polyline positions
   const routePositions = activePlan?.route?.map(wp => [wp.lat, wp.lng]) || [];
 
   return (
-    <div className="flex flex-col md:flex-row h-full">
-      {/* Sidebar Controls */}
-      <div className="w-full md:w-96 bg-white border-r border-slate-200 flex flex-col shrink-0 shadow-sm z-10">
-        <div className="p-6 border-b border-slate-100 bg-emerald-50/50">
-          <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-2">Green Corridor</h2>
-          <p className="text-sm text-slate-500">
-            Emergency vehicle prioritization via dynamic signal preemption.
-          </p>
-        </div>
-        
-        <div className="p-6 space-y-6 flex-1 overflow-y-auto">
-          {/* Form */}
-          {!activePlan ? (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium leading-6 text-slate-900 mb-1">Ambulance Origin</label>
-                <select 
-                  className="block w-full rounded-md border-0 py-2.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 sm:text-sm sm:leading-6 bg-white"
-                  value={origin}
-                  onChange={e => setOrigin(e.target.value)}
-                >
-                  <option value="">Select origin...</option>
-                  <option value="T Nagar">T Nagar (AMB_001)</option>
-                  <option value="Anna Salai">Anna Salai (AMB_002)</option>
-                </select>
+    <div className="split-view">
+      {/* LEFT: Map */}
+      <div className="split-panel split-panel-left" style={{ position: 'relative' }}>
+        {activePlan && (
+          <div className="map-overlay" style={{ top: 12, left: 12, zIndex: 500 }}>
+            <div className="map-tag" style={{ borderColor: 'rgba(16,185,129,0.4)' }}>
+              <div className="map-tag-label" style={{ color: 'var(--green)' }}>🚑 CORRIDOR ACTIVE</div>
+              <div className="map-tag-value" style={{ color: 'var(--green)' }}>
+                ETA: {activePlan.estimated_minutes}min • {activePlan.distance_km}km
               </div>
-
-              <div>
-                <label className="block text-sm font-medium leading-6 text-slate-900 mb-1">Target Hospital</label>
-                <select 
-                  className="block w-full rounded-md border-0 py-2.5 pl-3 pr-10 text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 sm:text-sm sm:leading-6 bg-white"
-                  value={destination}
-                  onChange={e => setDestination(e.target.value)}
-                >
-                  <option value="">Select destination...</option>
-                  {hospitals.map(h => (
-                    <option key={h.id} value={h.id}>{h.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                onClick={handleActivate}
-                disabled={!origin || !destination || isActivating}
-                className="w-full mt-4 flex justify-center items-center gap-2 rounded-md bg-emerald-600 px-3 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50 transition-colors"
-              >
-                {isActivating ? <MoreHorizontal className="w-5 h-5 animate-pulse" /> : <Power className="w-5 h-5" />}
-                {isActivating ? 'Optimizing Route...' : 'Activate Override'}
-              </button>
             </div>
-          ) : (
-            /* Active Plan Summary */
-            <div className="space-y-6">
-              <div className="bg-emerald-100 border border-emerald-200 rounded-xl p-4 flex items-start gap-4 shadow-sm">
-                <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
-                <div>
-                  <h3 className="font-bold text-emerald-900">Corridor Active</h3>
-                  <p className="text-sm text-emerald-700 mt-1 leading-relaxed">
-                    Signals synced. Route locked for AMB_001.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Est. Time</div>
-                  <div className="text-3xl font-bold text-slate-900">{activePlan.estimated_minutes}<span className="text-base font-medium text-slate-500 ml-1">min</span></div>
-                </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-center">
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Distance</div>
-                  <div className="text-3xl font-bold text-slate-900">{activePlan.distance_km}<span className="text-base font-medium text-slate-500 ml-1">km</span></div>
-                </div>
-              </div>
+          </div>
+        )}
 
-              <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 shadow-inner">
-                <div className="flex items-center gap-2 mb-3">
-                  <Activity className="w-4 h-4 text-teal-400" />
-                  <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Gemini 2.5 Routing</span>
+        <BaseMap zoom={13}>
+          {signals.map(sig => (
+            <Marker key={sig.signal_id} position={[sig.lat, sig.lng]}>
+              <Popup>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                  <b>{sig.intersection_name}</b><br/>
+                  State: <span style={{ color: sig.state === 'GREEN' ? 'var(--green)' : 'var(--red)' }}>{sig.state}</span><br/>
+                  {sig.green_corridor_active && <span style={{ color: 'var(--green)' }}>★ Override Active</span>}
                 </div>
-                <p className="text-sm text-slate-300 leading-relaxed italic border-l-2 border-teal-500 pl-3 py-1">
-                  "{activePlan.narrative}"
-                </p>
-                
-                <div className="mt-4 space-y-2">
-                  <div className="text-xs text-slate-400 font-medium">Cleared Intersections:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {activePlan.route.map((wp, i) => (
-                      <span key={i} className="inline-flex items-center px-2 py-1 rounded bg-slate-700/50 text-slate-300 text-[10px] font-mono border border-slate-600">
-                        {wp.intersection_name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleReset}
-                className="w-full flex justify-center rounded-md bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 hover:text-red-600 transition-colors"
-              >
-                End Mission & Reset Signals
-              </button>
-            </div>
+              </Popup>
+            </Marker>
+          ))}
+          {activePlan?.route && (
+            <Polyline positions={routePositions} color="#10b981" weight={5} opacity={0.8} dashArray="10, 10" />
           )}
-        </div>
+          {activePlan && routePositions.length > 0 && (
+            <Marker position={routePositions[routePositions.length - 1]}>
+              <Popup><div style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}><b>🏥 Destination Hospital</b></div></Popup>
+            </Marker>
+          )}
+        </BaseMap>
       </div>
 
-      {/* Map Area */}
-      <div className="flex-1 relative z-0">
-        <BaseMap>
-          {/* Signal Markers */}
-          {signals.map(sig => {
-            const isGreen = sig.state === 'GREEN';
-            return (
-              <Marker key={sig.signal_id} position={[sig.lat, sig.lng]}>
-                <Popup>
-                  <p className="font-semibold text-slate-800">{sig.intersection_name}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-sm text-slate-500 font-medium">Status:</span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-bold ${isGreen ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+      {/* RIGHT: Controls */}
+      <div className="split-panel split-panel-right" style={{ padding: 20, overflowY: 'auto' }}>
+        <div style={{ marginBottom: 24 }}>
+          <div className="page-title" style={{ fontSize: 18 }}>GREEN CORRIDOR</div>
+          <div className="page-subtitle">Emergency vehicle signal preemption system</div>
+        </div>
+
+        {!activePlan ? (
+          <div>
+            {/* Origin */}
+            <div style={{ marginBottom: 16 }}>
+              <label className="form-label">AMBULANCE ORIGIN</label>
+              <select className="form-select" value={origin} onChange={e => setOrigin(e.target.value)}>
+                <option value="">Select origin...</option>
+                <option value="T Nagar">T Nagar (AMB_001)</option>
+                <option value="Anna Salai">Anna Salai (AMB_002)</option>
+              </select>
+            </div>
+
+            {/* Destination */}
+            <div style={{ marginBottom: 16 }}>
+              <label className="form-label">TARGET HOSPITAL</label>
+              <select className="form-select" value={destination} onChange={e => setDestination(e.target.value)}>
+                <option value="">Select destination...</option>
+                {hospitals.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+              </select>
+            </div>
+
+            {/* Activate Button */}
+            <button
+              className="btn btn-green"
+              style={{ width: '100%', padding: '14px 20px', fontSize: 12 }}
+              onClick={handleActivate}
+              disabled={!origin || !destination || isActivating}
+            >
+              {isActivating ? '⟳ OPTIMIZING ROUTE...' : '⚡ ACTIVATE OVERRIDE'}
+            </button>
+
+            {/* Signal Status */}
+            <div className="card" style={{ marginTop: 20 }}>
+              <div className="card-header"><span className="card-title">SIGNAL_STATUS</span></div>
+              <div className="card-body" style={{ maxHeight: 250, overflowY: 'auto' }}>
+                {signals.map(sig => (
+                  <div key={sig.signal_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border)' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-primary)' }}>{sig.intersection_name?.slice(0, 25)}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, fontWeight: 700, color: sig.state === 'GREEN' ? 'var(--green)' : 'var(--red)' }}>
                       {sig.state}
                     </span>
                   </div>
-                  {sig.green_corridor_active && (
-                    <p className="text-xs text-emerald-600 font-semibold mt-2 animate-pulse bg-emerald-50 px-2 py-1 rounded inline-block">
-                      ★ Override Active
-                    </p>
-                  )}
-                </Popup>
-              </Marker>
-            );
-          })}
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Active Corridor Summary */
+          <div>
+            <div className="corridor-active-panel" style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 20 }}>✓</span>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--green)' }}>CORRIDOR ACTIVE</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)' }}>Signals synced. Route locked for AMB_001.</div>
+                </div>
+              </div>
+            </div>
 
-          {/* Active Route Polyline */}
-          {activePlan?.route && (
-            <Polyline 
-              positions={routePositions} 
-              color="#10b981" 
-              weight={6} 
-              opacity={0.8}
-              dashArray="10, 10"
-              className="animate-pulse"
-            />
-          )}
+            {/* Stats */}
+            <div className="stat-grid stat-grid-2" style={{ marginBottom: 16 }}>
+              <div className="stat-card green">
+                <div className="stat-label">EST. TIME</div>
+                <div className="stat-value green">{activePlan.estimated_minutes}<span style={{ fontSize: 14, marginLeft: 4 }}>min</span></div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-label">DISTANCE</div>
+                <div className="stat-value">{activePlan.distance_km}<span style={{ fontSize: 14, marginLeft: 4 }}>km</span></div>
+              </div>
+            </div>
 
-          {/* Start/End Markers */}
-          {activePlan && routePositions.length > 0 && (
-            <>
-              {/* Fake Hospital Marker */}
-              <Marker position={routePositions[routePositions.length - 1]}>
-                <Popup>Destination Hospital</Popup>
-              </Marker>
-            </>
-          )}
-        </BaseMap>
+            {/* AI Narrative */}
+            <div className="prediction-card" style={{ marginBottom: 16 }}>
+              <div className="prediction-header">
+                <span className="prediction-icon">⬡</span>
+                <span className="prediction-title">GEMINI 2.5 ROUTING</span>
+              </div>
+              <div className="prediction-text" style={{ fontStyle: 'italic', borderLeft: '2px solid var(--cyan)', paddingLeft: 12 }}>
+                "{activePlan.narrative}"
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-secondary)', marginBottom: 6 }}>CLEARED INTERSECTIONS:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {activePlan.route.map((wp, i) => (
+                    <span key={i} className="corridor-waypoint">{wp.intersection_name}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Reset */}
+            <button className="btn btn-red" style={{ width: '100%', padding: '12px 20px' }} onClick={handleReset}>
+              ■ END MISSION & RESET SIGNALS
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

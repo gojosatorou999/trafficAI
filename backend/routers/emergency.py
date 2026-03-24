@@ -278,6 +278,26 @@ Write in second person ("Drivers on..."). Keep it under 60 words."""
     }
 
 
+@router.get("/sos/history")
+async def sos_history(db: Session = Depends(get_db)):
+    """Return all SOS reports ordered by created_at desc."""
+    reports = db.query(SOSReport).order_by(SOSReport.created_at.desc()).all()
+    return [
+        {
+            "id": r.id,
+            "user_id": r.user_id,
+            "lat": r.lat,
+            "lng": r.lng,
+            "description": r.description,
+            "severity": r.severity,
+            "status": r.status,
+            "responder_type": r.responder_type,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+        }
+        for r in reports
+    ]
+
+
 @router.get("/sos/{sos_id}")
 async def get_sos(sos_id: int, db: Session = Depends(get_db)):
     """Get SOS report status + responder details."""
@@ -317,23 +337,3 @@ async def update_sos_status(sos_id: int, request: SOSStatusUpdate, db: Session =
         "status": sos.status,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-
-
-@router.get("/sos/history")
-async def sos_history(db: Session = Depends(get_db)):
-    """Return all SOS reports ordered by created_at desc."""
-    reports = db.query(SOSReport).order_by(SOSReport.created_at.desc()).all()
-    return [
-        {
-            "id": r.id,
-            "user_id": r.user_id,
-            "lat": r.lat,
-            "lng": r.lng,
-            "description": r.description,
-            "severity": r.severity,
-            "status": r.status,
-            "responder_type": r.responder_type,
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-        }
-        for r in reports
-    ]

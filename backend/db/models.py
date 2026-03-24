@@ -105,6 +105,7 @@ class RiskScore(Base):
     factors = Column(Text, nullable=True)  # JSON string of factors list
     risk_level = Column(String(20), nullable=True)
     recommendation = Column(String(500), nullable=True)
+    intersection_name = Column(String(200), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 

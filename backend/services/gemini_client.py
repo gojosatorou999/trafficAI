@@ -24,7 +24,7 @@ else:
     GEMINI_CONFIGURED = False
     logger.warning("GEMINI_API_KEY not set — Gemini calls will return fallback responses.")
 
-MODEL_NAME = "gemini-2.5-flash-preview-05-20"
+MODEL_NAME = "gemini-2.5-flash"
 
 
 async def _call_gemini_with_retry(generate_fn, max_retries: int = 3):

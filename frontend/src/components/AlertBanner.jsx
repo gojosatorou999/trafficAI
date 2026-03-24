@@ -1,58 +1,43 @@
-import { useState, useEffect } from 'react';
-import { AlertTriangle, Info, X } from 'lucide-react';
+import useAlerts from '../hooks/useAlerts';
 
-export default function AlertBanner({ alerts }) {
-  const [visibleAlert, setVisibleAlert] = useState(null);
+export default function AlertBanner() {
+  const { alerts } = useAlerts();
+  const latest = alerts[alerts.length - 1];
+  if (!latest) return null;
 
-  useEffect(() => {
-    // Show the most recent narrator alert
-    const narratorAlerts = alerts.filter(a => a.type === 'NARRATOR' || a.type === 'SOS');
-    if (narratorAlerts.length > 0) {
-      const latest = narratorAlerts[narratorAlerts.length - 1];
-      setVisibleAlert(latest);
-      
-      // Auto dismiss after 8 seconds
-      const timer = setTimeout(() => {
-        setVisibleAlert(null);
-      }, 8000);
-      return () => clearTimeout(timer);
-    }
-  }, [alerts]);
-
-  if (!visibleAlert) return null;
-
-  const isCritical = visibleAlert.severity === 'CRITICAL' || visibleAlert.severity === 'HIGH' || visibleAlert.type === 'SOS';
-  const bgColor = isCritical ? 'bg-red-600' : 'bg-blue-600';
-  const Icon = isCritical ? AlertTriangle : Info;
+  const colors = {
+    INCIDENT: 'var(--red)',
+    SOS: 'var(--red)',
+    CORRIDOR_ACTIVATED: 'var(--green)',
+    CORRIDOR_RESET: 'var(--cyan)',
+    NARRATOR: 'var(--orange)',
+  };
+  const borderColor = colors[latest.type] || 'var(--cyan)';
 
   return (
-    <div className={`fixed top-0 inset-x-0 pb-2 sm:pb-5 z-50 transform transition-transform duration-500`}>
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-        <div className={`p-2 rounded-lg shadow-lg sm:p-3 ${bgColor}`}>
-          <div className="flex items-center justify-between flex-wrap">
-            <div className="w-0 flex-1 flex items-center shadow-sm">
-              <span className={`flex p-2 rounded-lg ${isCritical ? 'bg-red-800' : 'bg-blue-800'}`}>
-                <Icon className="h-6 w-6 text-white" aria-hidden="true" />
-              </span>
-              <p className="ml-3 font-medium text-white truncate">
-                <span className="md:hidden">Emergency Broadcast</span>
-                <span className="hidden md:inline">
-                  <span className="font-bold mr-2">[{visibleAlert.type}]</span>
-                  {visibleAlert.payload?.narrative || visibleAlert.payload?.description || 'Emergency alert'}
-                </span>
-              </p>
-            </div>
-            <div className="order-2 flex-shrink-0 sm:order-3 sm:ml-2">
-              <button
-                type="button"
-                onClick={() => setVisibleAlert(null)}
-                className={`-mr-1 flex p-2 rounded-md hover:bg-opacity-20 hover:bg-white focus:outline-none`}
-              >
-                <X className="h-6 w-6 text-white" aria-hidden="true" />
-              </button>
-            </div>
-          </div>
-        </div>
+    <div
+      className="animate-fade-in"
+      style={{
+        position: 'fixed', top: 64, left: '50%', transform: 'translateX(-50%)',
+        zIndex: 9999, maxWidth: 600, width: '90%',
+        background: 'var(--bg-card)', border: `1px solid ${borderColor}`,
+        borderLeft: `3px solid ${borderColor}`,
+        borderRadius: 8, padding: '12px 20px',
+        fontFamily: 'var(--font-mono)', fontSize: 11,
+        color: 'var(--text-primary)',
+        boxShadow: `0 0 30px rgba(0,0,0,0.5)`,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ color: borderColor, fontWeight: 700, fontSize: 9, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+          {latest.type}
+        </span>
+        <span style={{ color: 'var(--text-secondary)', fontSize: 10 }}>
+          {latest.timestamp ? new Date(latest.timestamp).toLocaleTimeString() : ''}
+        </span>
+      </div>
+      <div style={{ marginTop: 6, fontSize: 12, lineHeight: 1.5 }}>
+        {latest.payload?.narrative || latest.payload?.description || JSON.stringify(latest.payload).slice(0, 120)}
       </div>
     </div>
   );
