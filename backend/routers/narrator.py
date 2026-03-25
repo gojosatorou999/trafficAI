@@ -38,7 +38,7 @@ NARRATOR_SYSTEM = "You are a real-time traffic safety narrator. Write urgent, fa
 def _build_narrator_prompt(incident_type, lat, lng, severity, details):
     return f"""Generate an emergency broadcast for drivers near this incident:
 Type: {incident_type}
-Location: {lat}, {lng} (Chennai, India)
+Location: {lat}, {lng} (Hyderabad, India)
 Severity: {severity}
 Details: {details}
 

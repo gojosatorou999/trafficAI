@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from db.models import get_db, Incident, Vehicle
 from services.gemini_client import analyze_video_frames
 from services.alert_manager import manager
-from services.mock_data import generate_incident, generate_vehicles
+from services.mock_data import generate_incident
 
 router = APIRouter()
 
@@ -95,8 +95,8 @@ async def analyze_frames(request: AnalyzeRequest, db: Session = Depends(get_db))
     if inc_type:
         # Get vehicle position for lat/lng
         vehicle = db.query(Vehicle).filter(Vehicle.vehicle_id == request.vehicle_id).first()
-        lat = vehicle.lat if vehicle else 13.0827
-        lng = vehicle.lng if vehicle else 80.2707
+        lat = vehicle.lat if vehicle else 17.3850
+        lng = vehicle.lng if vehicle else 78.4867
 
         incident = Incident(
             type=inc_type,
@@ -173,18 +173,10 @@ async def get_incidents(
 
 @router.get("/vehicles")
 async def get_vehicles(db: Session = Depends(get_db)):
-    """Return current vehicle positions with small random movement delta."""
+    """Return current vehicle positions from real user-submitted data."""
     vehicles = db.query(Vehicle).all()
-    result = []
-    for v in vehicles:
-        # Apply small random delta to simulate movement
-        delta_lat = random.uniform(-0.002, 0.002)
-        delta_lng = random.uniform(-0.002, 0.002)
-        v.lat = round(v.lat + delta_lat, 6)
-        v.lng = round(v.lng + delta_lng, 6)
-        v.speed = round(random.uniform(20, 100), 1)
-
-        result.append({
+    return [
+        {
             "id": v.id,
             "vehicle_id": v.vehicle_id,
             "lat": v.lat,
@@ -192,10 +184,9 @@ async def get_vehicles(db: Session = Depends(get_db)):
             "speed": v.speed,
             "heading": v.heading,
             "status": v.status,
-        })
-
-    db.commit()
-    return result
+        }
+        for v in vehicles
+    ]
 
 
 @router.post("/simulate")

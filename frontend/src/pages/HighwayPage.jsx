@@ -99,17 +99,20 @@ export default function HighwayPage() {
           </div>
           {incidents.slice(0, 8).map((inc) => {
             const isHigh = inc.severity === 'HIGH' || inc.severity === 'CRITICAL';
+            const isMedium = inc.severity === 'MEDIUM';
             const confPercent = inc.confidence === 'HIGH' ? 98 : inc.confidence === 'MEDIUM' ? 72 : 45;
+            const cardClass = isHigh ? '' : isMedium ? 'medium' : 'low';
             return (
-              <div key={inc.id} className={`incident-card ${isHigh ? '' : 'medium'}`} style={{ marginBottom: 10 }}>
+              <div key={inc.id} className={`incident-card ${cardClass}`} style={{ marginBottom: 10 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
-                    <div className="incident-type" style={{ color: isHigh ? 'var(--red)' : 'var(--orange)' }}>
-                      {isHigh ? 'CRITICAL INCIDENT' : 'DRIVER ALERT'}
+                    <div className="incident-type" style={{ color: isHigh ? 'var(--red)' : isMedium ? 'var(--orange)' : 'var(--green)' }}>
+                      {isHigh ? 'CRITICAL INCIDENT' : isMedium ? 'DRIVER ALERT' : 'LOW PRIORITY'}
                     </div>
                     <div className="incident-title">{inc.type}: {inc.vehicle_id}</div>
+                    {inc.description && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)', marginTop: 4 }}>{inc.description}</div>}
                   </div>
-                  <span className={`severity-badge ${isHigh ? 'high' : 'medium'}`}>{inc.severity}</span>
+                  <span className={`severity-badge ${isHigh ? 'high' : isMedium ? 'medium' : 'low'}`}>{inc.severity}</span>
                 </div>
                 <div className="incident-meta">
                   LOC: {inc.lat?.toFixed(2)}N {inc.lng?.toFixed(2)}E &nbsp;|&nbsp; TS: {inc.created_at ? new Date(inc.created_at).toLocaleTimeString() : '—'}

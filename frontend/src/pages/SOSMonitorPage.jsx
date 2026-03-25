@@ -42,8 +42,8 @@ export default function SOSMonitorPage() {
       <div className="stat-grid stat-grid-3">
         <div className="stat-card red">
           <div className="stat-label">RECEIVED_ALERTS</div>
-          <div className="stat-value red">{received || sosReports.length}</div>
-          <div className="stat-sub">+{Math.floor(Math.random() * 10)}% TODAY</div>
+          <div className="stat-value red">{received}</div>
+          <div className="stat-sub">PENDING</div>
         </div>
         <div className="stat-card orange">
           <div className="stat-label">DISPATCHED_UNITS</div>
@@ -53,7 +53,7 @@ export default function SOSMonitorPage() {
         <div className="stat-card green">
           <div className="stat-label">RESOLVED_CASES</div>
           <div className="stat-value green">{resolved}</div>
-          <div className="stat-sub">AVG_6.4_MIN</div>
+          <div className="stat-sub">COMPLETED</div>
         </div>
       </div>
 
@@ -190,7 +190,7 @@ export default function SOSMonitorPage() {
               <span className="prediction-title">AI_PREDICTION_ENGINE</span>
             </div>
             <div className="prediction-text">
-              Neural network suggests <span style={{ color: 'var(--orange)', fontWeight: 700 }}>74%</span> probability of traffic secondary congestion on OMR corridor within 15 minutes. Routing reroute protocols active.
+              AI prediction engine active. Real-time analysis of active SOS reports and dispatch coordination in Hyderabad Metropolitan Area.
             </div>
           </div>
         </div>

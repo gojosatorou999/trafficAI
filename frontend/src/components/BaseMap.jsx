@@ -9,7 +9,8 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-const defaultCenter = [13.0827, 80.2707];
+// Default Hyderabad center
+const defaultCenter = [17.3850, 78.4867];
 const defaultZoom = 12;
 
 export default function BaseMap({ children, center = defaultCenter, zoom = defaultZoom, className = "h-full w-full" }) {

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from db.models import get_db, TrafficSignal, SOSReport, Incident, NarratorLog
 from services.gemini_client import generate_text
 from services.alert_manager import manager
-from services.mock_data import CHENNAI_HOSPITALS, generate_emergency_resources
+from services.mock_data import HYDERABAD_HOSPITALS, generate_emergency_resources
 from utils.geo import find_nearest, euclidean_distance
 
 router = APIRouter()
@@ -46,12 +46,12 @@ CORRIDOR_SYSTEM = "You are an emergency traffic coordinator. Return valid JSON o
 
 
 def _build_corridor_prompt(amb_lat, amb_lng, hosp_lat, hosp_lng):
-    return f"""An ambulance needs a green corridor in Chennai.
+    return f"""An ambulance needs a green corridor in Hyderabad.
 Ambulance location: latitude {amb_lat}, longitude {amb_lng}
 Hospital location: latitude {hosp_lat}, longitude {hosp_lng}
 
 Plan a green corridor with 5-8 signal waypoints along the fastest route.
-All waypoints must be within the Chennai city area.
+All waypoints must be within the Hyderabad city area.
 
 Return ONLY this JSON:
 {{"route": [{{"lat": float, "lng": float, "signal_id": "SIG_001", "action": "GREEN|RED", "intersection_name": "string"}}], "estimated_minutes": int, "distance_km": float, "narrative": "2-sentence description of the corridor for broadcast"}}"""
@@ -98,8 +98,8 @@ async def activate_green_corridor(request: GreenCorridorRequest, db: Session = D
                 # Create new signal entry if not found
                 new_signal = TrafficSignal(
                     signal_id=signal_id,
-                    lat=waypoint.get("lat", 13.0827),
-                    lng=waypoint.get("lng", 80.2707),
+                    lat=waypoint.get("lat", 17.3850),
+                    lng=waypoint.get("lng", 78.4867),
                     state=waypoint.get("action", "GREEN"),
                     green_corridor_active=True,
                     intersection_name=waypoint.get("intersection_name", ""),
@@ -161,10 +161,10 @@ async def reset_corridor(db: Session = Depends(get_db)):
 
 @router.get("/hospitals")
 async def get_hospitals():
-    """Return hardcoded list of 5 Chennai hospitals."""
+    """Return list of Hyderabad hospitals."""
     return [
         {"id": i + 1, "name": h["name"], "lat": h["lat"], "lng": h["lng"]}
-        for i, h in enumerate(CHENNAI_HOSPITALS)
+        for i, h in enumerate(HYDERABAD_HOSPITALS)
     ]
 
 
@@ -196,7 +196,7 @@ async def submit_sos(request: SOSRequest, db: Session = Depends(get_db)):
     resources = generate_emergency_resources()
     nearest_ambulance = find_nearest(request.lat, request.lng, resources["ambulances"])
     nearest_hospital = find_nearest(request.lat, request.lng, [
-        {"name": h["name"], "lat": h["lat"], "lng": h["lng"]} for h in CHENNAI_HOSPITALS
+        {"name": h["name"], "lat": h["lat"], "lng": h["lng"]} for h in HYDERABAD_HOSPITALS
     ])
     nearest_police = find_nearest(request.lat, request.lng, resources["police"])
 
@@ -223,7 +223,7 @@ async def submit_sos(request: SOSRequest, db: Session = Depends(get_db)):
     # Trigger narrator
     narrator_prompt = f"""Generate an emergency broadcast for drivers near this incident:
 Type: SOS Emergency
-Location: {request.lat}, {request.lng} (Chennai, India)
+Location: {request.lat}, {request.lng} (Hyderabad, India)
 Severity: {request.severity}
 Details: {request.description}
 

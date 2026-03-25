@@ -25,8 +25,8 @@ export default function GreenCorridorPage() {
     if (!origin || !destination) return;
     setIsActivating(true);
     try {
-      const originLat = 13.0418;
-      const originLng = 80.2341;
+      const originLat = 17.3950;
+      const originLng = 78.4420;
       const targetHosp = hospitals.find(h => h.id.toString() === destination);
       if (!targetHosp) return;
 
@@ -102,8 +102,8 @@ export default function GreenCorridorPage() {
               <label className="form-label">AMBULANCE ORIGIN</label>
               <select className="form-select" value={origin} onChange={e => setOrigin(e.target.value)}>
                 <option value="">Select origin...</option>
-                <option value="T Nagar">T Nagar (AMB_001)</option>
-                <option value="Anna Salai">Anna Salai (AMB_002)</option>
+                <option value="Mehdipatnam">Mehdipatnam (AMB_001)</option>
+                <option value="Ameerpet">Ameerpet (AMB_002)</option>
               </select>
             </div>
 

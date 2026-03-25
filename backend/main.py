@@ -24,19 +24,19 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: init DB + seed mock data."""
+    """Startup: init DB + seed infrastructure data."""
     logger.info("Starting IntelliMobility AI...")
     init_db()
     logger.info("Database initialized.")
 
-    # Seed mock data on first startup
+    # Seed infrastructure data (signals, routes, intersections) on first startup
     db = SessionLocal()
     try:
         seeded = seed_database(db)
         if seeded:
-            logger.info("Mock data seeded successfully.")
+            logger.info("Infrastructure data seeded (Hyderabad signals, routes, intersections).")
         else:
-            logger.info("Database already contains data, skipping seed.")
+            logger.info("Infrastructure already seeded, skipping.")
     finally:
         db.close()
 

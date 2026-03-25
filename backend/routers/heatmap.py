@@ -41,14 +41,14 @@ PREDICT_SYSTEM = "You are a predictive traffic safety AI. Analyze patterns and p
 
 def _build_predict_prompt(time_of_day, day_of_week, weather, congestion_zones):
     zones_json = json.dumps(congestion_zones) if congestion_zones else "[]"
-    return f"""Predict accident risk zones for Chennai in the next 30-60 minutes.
+    return f"""Predict accident risk zones for Hyderabad in the next 30-60 minutes.
 Current conditions:
 - Time: {time_of_day} on {day_of_week}
 - Weather: {weather}
 - Active congestion zones: {zones_json}
 
-Based on typical Chennai traffic patterns, identify 8 high-risk locations.
-Focus on: Anna Salai, Mount Road, OMR, ECR, Poonamallee High Road, GST Road.
+Based on typical Hyderabad traffic patterns, identify 8 high-risk locations.
+Focus on: Mehdipatnam, HITEC City, Gachibowli ORR, Kukatpally, Ameerpet, Dilsukhnagar.
 
 Return ONLY this JSON:
 {{"predictions": [{{"lat": float, "lng": float, "risk_score": int (0-100), "reason": "string", "accident_type": "REAR_END|PEDESTRIAN|INTERSECTION|WRONG_WAY"}}], "summary": "2-sentence overview", "confidence": "HIGH|MEDIUM|LOW"}}"""

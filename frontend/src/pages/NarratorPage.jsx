@@ -13,8 +13,23 @@ const BADGE_COLORS = {
 
 function getTypeBadge(type) {
   const t = (type || 'CRASH').toUpperCase();
-  const c = BADGE_COLORS[t] || BADGE_COLORS.CRASH;
-  return c;
+  return BADGE_COLORS[t] || BADGE_COLORS.CRASH;
+}
+
+function speakText(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.95;
+  utterance.pitch = 0.9;
+  utterance.volume = 1;
+  // Try to pick a good English voice
+  const voices = window.speechSynthesis.getVoices();
+  const english = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) ||
+                  voices.find(v => v.lang.startsWith('en')) ||
+                  voices[0];
+  if (english) utterance.voice = english;
+  window.speechSynthesis.speak(utterance);
 }
 
 export default function NarratorPage() {
@@ -26,8 +41,12 @@ export default function NarratorPage() {
 
   const handleTestBroadcast = async () => {
     try {
-      await api.post('/api/narrator/broadcast-test');
+      const res = await api.post('/api/narrator/broadcast-test');
       refetch();
+      // Auto-speak the new broadcast
+      if (res.data?.narrative) {
+        speakText(res.data.narrative);
+      }
     } catch (e) { console.error('Failed to trigger test broadcast', e); }
   };
 
@@ -37,7 +56,7 @@ export default function NarratorPage() {
       <div className="page-header">
         <div className="page-title">NARRATOR FEED</div>
         <div className="page-subtitle">
-          Real-time synthesized voice logs and automated broadcast history for Chennai Smart Corridor transit monitoring.
+          Real-time synthesized voice logs and automated broadcast history for Hyderabad Smart Corridor transit monitoring.
         </div>
       </div>
 
@@ -76,9 +95,9 @@ export default function NarratorPage() {
             </div>
 
             <div className="narrator-actions">
-              <button className="narrator-action-btn" title="Copy">📋</button>
+              <button className="narrator-action-btn" title="Copy" onClick={() => navigator.clipboard?.writeText(log.narrative || '')}>📋</button>
               <button className="narrator-action-btn" title="Like">👍</button>
-              <button className="narrator-action-btn" title="Speaker">🔊</button>
+              <button className="narrator-action-btn" title="Play aloud" onClick={() => speakText(log.narrative || '')}>🔊</button>
             </div>
           </div>
         );
@@ -90,7 +109,7 @@ export default function NarratorPage() {
           fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)',
           border: '1px dashed var(--border)', borderRadius: 8,
         }}>
-          NO ACTIVE BROADCASTS
+          NO ACTIVE BROADCASTS — Click "BROADCAST TEST" to generate one
         </div>
       )}
 

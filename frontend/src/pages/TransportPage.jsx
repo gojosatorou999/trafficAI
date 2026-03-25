@@ -58,7 +58,7 @@ export default function TransportPage() {
         <div className="map-overlay" style={{ top: 12, left: 12, zIndex: 500 }}>
           <div className="map-tag">
             <div className="map-tag-label">LIVE COORDINATES</div>
-            <div className="map-tag-value">13.0827° N, 80.2707° E</div>
+            <div className="map-tag-value">17.3850° N, 78.4867° E</div>
           </div>
         </div>
 
@@ -82,7 +82,7 @@ export default function TransportPage() {
         {/* Title */}
         <div style={{ marginBottom: 20 }}>
           <div className="page-title" style={{ fontSize: 18 }}>FLEET_TRACKER</div>
-          <div className="page-subtitle">CHENNAI METROPOLITAN TRANSPORT AUTHORITY</div>
+          <div className="page-subtitle">HYDERABAD METROPOLITAN TRANSPORT AUTHORITY</div>
         </div>
 
         {/* Fleet Stats */}

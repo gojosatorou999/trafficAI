@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from db.models import get_db, BusRoute
 from services.gemini_client import generate_text
-from services.mock_data import CHENNAI_BUS_ROUTES
+from services.mock_data import HYDERABAD_BUS_ROUTES
 from utils.geo import euclidean_distance
 
 router = APIRouter()
@@ -53,8 +53,8 @@ async def get_routes(db: Session = Depends(get_db)):
 
 @router.get("/arrivals")
 async def get_arrivals(
-    stop_lat: float = Query(13.0827, description="Stop latitude"),
-    stop_lng: float = Query(80.2707, description="Stop longitude"),
+    stop_lat: float = Query(17.3850, description="Stop latitude"),
+    stop_lng: float = Query(78.4867, description="Stop longitude"),
     db: Session = Depends(get_db),
 ):
     """Get arrivals for the nearest routes to a stop location, sorted by ETA."""
@@ -89,7 +89,7 @@ async def predict_delay(request: PredictDelayRequest, db: Session = Depends(get_
 
     prompt = f"""Predict the bus delay for this route:
 - Route: {request.route_id} ({route_info})
-- Current bus position: lat {request.current_lat}, lng {request.current_lng} (Chennai, India)
+- Current bus position: lat {request.current_lat}, lng {request.current_lng} (Hyderabad, India)
 - Scheduled arrival: {request.scheduled_arrival or 'N/A'}
 - Current delay: {route.delay_minutes if route else 0} minutes
 
@@ -136,7 +136,7 @@ async def get_live_positions(db: Session = Depends(get_db)):
 
     for route in routes:
         # Find this route's waypoints
-        route_data = next((r for r in CHENNAI_BUS_ROUTES if r["route_id"] == route.route_id), None)
+        route_data = next((r for r in HYDERABAD_BUS_ROUTES if r["route_id"] == route.route_id), None)
 
         if route_data and route_data.get("waypoints"):
             # Move bus toward next waypoint

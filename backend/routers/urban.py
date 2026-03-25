@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from db.models import get_db, RiskScore, Incident
 from services.gemini_client import analyze_traffic_data, generate_text
-from services.mock_data import generate_congestion_zones, generate_risk_scores, CHENNAI_INTERSECTIONS
+from services.mock_data import generate_congestion_zones, generate_risk_scores, HYDERABAD_INTERSECTIONS
 from utils.geo import cluster_points
 
 router = APIRouter()
@@ -47,7 +47,7 @@ def _build_score_prompt(data: dict) -> str:
 - Traffic density: {data['traffic_density']}/100
 - Braking events in last hour: {data['braking_events']}
 - Near-collision incidents: {data['near_collisions']}
-- Location: lat {data['lat']}, lng {data['lng']} (Chennai, India)
+- Location: lat {data['lat']}, lng {data['lng']} (Hyderabad, India)
 
 Return ONLY this JSON:
 {{"score": int (0-100), "risk_level": "LOW|MEDIUM|HIGH|CRITICAL", "factors": ["string", "string"], "recommendation": "one sentence action"}}"""
@@ -68,35 +68,31 @@ def _parse_json_response(response: str) -> dict:
 
 @router.get("/risk-scores")
 async def get_risk_scores(db: Session = Depends(get_db)):
-    """Return all risk scores with slight randomness to simulate live data."""
+    """Return all risk scores from real DB data."""
     scores = db.query(RiskScore).all()
     result = []
     for s in scores:
-        # Add slight randomness
-        jitter = random.randint(-5, 5)
-        live_score = max(0, min(100, s.score + jitter))
-        risk_level = "LOW" if live_score < 40 else ("MEDIUM" if live_score < 70 else ("HIGH" if live_score < 90 else "CRITICAL"))
-
         factors = []
         try:
             factors = json.loads(s.factors) if s.factors else []
         except json.JSONDecodeError:
             factors = []
 
-        # Use intersection_name from model if available, fallback to lookup
         intersection_name = getattr(s, 'intersection_name', None) or ""
         if not intersection_name:
-            for inter in CHENNAI_INTERSECTIONS:
+            for inter in HYDERABAD_INTERSECTIONS:
                 if abs(inter["lat"] - s.lat) < 0.001 and abs(inter["lng"] - s.lng) < 0.001:
                     intersection_name = inter["name"]
                     break
+
+        risk_level = "LOW" if s.score < 40 else ("MEDIUM" if s.score < 70 else ("HIGH" if s.score < 90 else "CRITICAL"))
 
         result.append({
             "id": s.id,
             "intersection_id": s.intersection_id,
             "lat": s.lat,
             "lng": s.lng,
-            "score": live_score,
+            "score": s.score,
             "risk_level": risk_level,
             "factors": factors,
             "recommendation": s.recommendation or "",
@@ -183,7 +179,7 @@ async def check_wrong_route(request: WrongRouteRequest):
     """Gemini evaluates if vehicle is on wrong/dangerous route."""
     prompt = f"""Evaluate if this vehicle is on a wrong or dangerous route:
 - Vehicle ID: {request.vehicle_id}
-- Current position: lat {request.current_lat}, lng {request.current_lng} (Chennai, India)
+- Current position: lat {request.current_lat}, lng {request.current_lng} (Hyderabad, India)
 - Heading: {request.heading_degrees} degrees
 
 Determine if the vehicle appears to be traveling in the wrong direction or on a dangerous route.

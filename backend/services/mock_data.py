@@ -1,120 +1,67 @@
 """
-Mock data generators for IntelliMobility AI.
-All data centered on Chennai, India (lat: 13.0827, lng: 80.2707).
+Infrastructure seed data for IntelliMobility AI.
+All data centered on Hyderabad, India (lat: 17.3850, lng: 78.4867).
+This file provides ONLY system infrastructure (intersections, hospitals, routes, signals).
+No fake incidents, vehicles, or historical data are generated — those come from real user input.
 """
-import random
 import json
-from datetime import datetime, timezone, timedelta
-from faker import Faker
+from datetime import datetime, timezone
 
-# Chennai center coordinates
-CHENNAI_LAT = 13.0827
-CHENNAI_LNG = 80.2707
+# Hyderabad center coordinates
+HYDERABAD_LAT = 17.3850
+HYDERABAD_LNG = 78.4867
 RADIUS = 0.1  # ~11km radius
-
-fake = Faker("en_IN")
 
 INCIDENT_TYPES = ["CRASH", "FATIGUE", "SLOWDOWN", "STATIONARY", "WRONG_ROUTE"]
 SEVERITIES = ["LOW", "MEDIUM", "HIGH"]
 
-# Chennai-specific locations for realism
-CHENNAI_INTERSECTIONS = [
-    {"name": "Anna Salai - Gemini Flyover", "lat": 13.0604, "lng": 80.2496},
-    {"name": "Mount Road - Cathedral Road Junction", "lat": 13.0612, "lng": 80.2565},
-    {"name": "OMR - Thoraipakkam Signal", "lat": 12.9352, "lng": 80.2332},
-    {"name": "ECR - Thiruvanmiyur Junction", "lat": 12.9830, "lng": 80.2594},
-    {"name": "Poonamallee High Road - Koyambedu", "lat": 13.0694, "lng": 80.1948},
-    {"name": "GST Road - Guindy Signal", "lat": 13.0067, "lng": 80.2206},
-    {"name": "Kathipara Junction", "lat": 13.0126, "lng": 80.2001},
-    {"name": "Vadapalani Signal Junction", "lat": 13.0500, "lng": 80.2120},
-    {"name": "T Nagar - Panagal Park Signal", "lat": 13.0418, "lng": 80.2341},
-    {"name": "Egmore - Central Station Road", "lat": 13.0732, "lng": 80.2609},
-    {"name": "Mylapore - Luz Corner", "lat": 13.0339, "lng": 80.2675},
-    {"name": "Adyar Signal Junction", "lat": 13.0012, "lng": 80.2565},
-    {"name": "Nungambakkam High Road", "lat": 13.0600, "lng": 80.2400},
-    {"name": "Velachery Main Road Junction", "lat": 12.9815, "lng": 80.2185},
-    {"name": "Tambaram - GST Road Signal", "lat": 12.9249, "lng": 80.1278},
+# Hyderabad real intersections
+HYDERABAD_INTERSECTIONS = [
+    {"name": "Mehdipatnam Circle", "lat": 17.3950, "lng": 78.4420},
+    {"name": "Tolichowki Junction", "lat": 17.3980, "lng": 78.4280},
+    {"name": "HITEC City Signal", "lat": 17.4435, "lng": 78.3772},
+    {"name": "Gachibowli ORR Junction", "lat": 17.4401, "lng": 78.3489},
+    {"name": "Kukatpally Y Junction", "lat": 17.4948, "lng": 78.3996},
+    {"name": "Ameerpet Metro Junction", "lat": 17.4375, "lng": 78.4483},
+    {"name": "Begumpet Flyover", "lat": 17.4440, "lng": 78.4740},
+    {"name": "Secunderabad Clock Tower", "lat": 17.4399, "lng": 78.5010},
+    {"name": "Dilsukhnagar Bus Stand", "lat": 17.3687, "lng": 78.5279},
+    {"name": "LB Nagar Circle", "lat": 17.3487, "lng": 78.5514},
+    {"name": "Charminar Junction", "lat": 17.3616, "lng": 78.4747},
+    {"name": "Jubilee Hills Checkpost", "lat": 17.4310, "lng": 78.4070},
+    {"name": "Madhapur Ayyappa Society", "lat": 17.4430, "lng": 78.3900},
+    {"name": "Uppal Ring Road Junction", "lat": 17.4015, "lng": 78.5590},
+    {"name": "Habsiguda ECIL Xroads", "lat": 17.4290, "lng": 78.5440},
 ]
 
-CHENNAI_HOSPITALS = [
-    {"name": "Apollo Hospital, Greams Road", "lat": 13.0612, "lng": 80.2520},
-    {"name": "Fortis Malar Hospital", "lat": 13.0045, "lng": 80.2558},
-    {"name": "MIOT International", "lat": 13.0156, "lng": 80.2012},
-    {"name": "Government General Hospital", "lat": 13.0780, "lng": 80.2740},
-    {"name": "Sri Ramachandra Hospital", "lat": 13.0355, "lng": 80.1422},
+HYDERABAD_HOSPITALS = [
+    {"name": "Apollo Hospital, Jubilee Hills", "lat": 17.4260, "lng": 78.4110},
+    {"name": "KIMS Hospital, Secunderabad", "lat": 17.4455, "lng": 78.5005},
+    {"name": "Yashoda Hospital, Somajiguda", "lat": 17.4280, "lng": 78.4630},
+    {"name": "Care Hospital, Banjara Hills", "lat": 17.4160, "lng": 78.4380},
+    {"name": "Osmania General Hospital", "lat": 17.3710, "lng": 78.4820},
 ]
 
-CHENNAI_BUS_ROUTES = [
-    {"route_id": "R001", "bus_id": "TN-01-BUS-1234", "origin": "Broadway", "destination": "Tambaram",
-     "waypoints": [(13.0878, 80.2785), (13.0694, 80.2565), (13.0418, 80.2341), (13.0067, 80.2206), (12.9249, 80.1278)]},
-    {"route_id": "R002", "bus_id": "TN-01-BUS-5678", "origin": "Koyambedu", "destination": "Thiruvanmiyur",
-     "waypoints": [(13.0694, 80.1948), (13.0500, 80.2120), (13.0339, 80.2675), (12.9830, 80.2594)]},
-    {"route_id": "R003", "bus_id": "TN-01-BUS-9012", "origin": "Central Station", "destination": "OMR Thoraipakkam",
-     "waypoints": [(13.0826, 80.2754), (13.0612, 80.2565), (13.0012, 80.2565), (12.9352, 80.2332)]},
-    {"route_id": "R004", "bus_id": "TN-01-BUS-3456", "origin": "T Nagar", "destination": "Guindy",
-     "waypoints": [(13.0418, 80.2341), (13.0339, 80.2300), (13.0126, 80.2001), (13.0067, 80.2206)]},
-    {"route_id": "R005", "bus_id": "TN-01-BUS-7890", "origin": "Adyar", "destination": "Poonamallee",
-     "waypoints": [(13.0012, 80.2565), (13.0339, 80.2675), (13.0500, 80.2120), (13.0694, 80.1948)]},
+HYDERABAD_BUS_ROUTES = [
+    {"route_id": "R001", "bus_id": "TS-08-BUS-1234", "origin": "Secunderabad", "destination": "Mehdipatnam",
+     "waypoints": [(17.4399, 78.5010), (17.4375, 78.4483), (17.4310, 78.4070), (17.3950, 78.4420)]},
+    {"route_id": "R002", "bus_id": "TS-08-BUS-5678", "origin": "Kukatpally", "destination": "Dilsukhnagar",
+     "waypoints": [(17.4948, 78.3996), (17.4375, 78.4483), (17.3850, 78.4867), (17.3687, 78.5279)]},
+    {"route_id": "R003", "bus_id": "TS-08-BUS-9012", "origin": "HITEC City", "destination": "LB Nagar",
+     "waypoints": [(17.4435, 78.3772), (17.4310, 78.4070), (17.3850, 78.4867), (17.3487, 78.5514)]},
+    {"route_id": "R004", "bus_id": "TS-08-BUS-3456", "origin": "Ameerpet", "destination": "Charminar",
+     "waypoints": [(17.4375, 78.4483), (17.4160, 78.4380), (17.3850, 78.4867), (17.3616, 78.4747)]},
+    {"route_id": "R005", "bus_id": "TS-08-BUS-7890", "origin": "Uppal", "destination": "Gachibowli",
+     "waypoints": [(17.4015, 78.5590), (17.4290, 78.5440), (17.4375, 78.4483), (17.4401, 78.3489)]},
 ]
-
-
-def _random_chennai_lat(seed_rng: random.Random = None):
-    rng = seed_rng or random
-    return round(CHENNAI_LAT + rng.uniform(-RADIUS, RADIUS), 6)
-
-
-def _random_chennai_lng(seed_rng: random.Random = None):
-    rng = seed_rng or random
-    return round(CHENNAI_LNG + rng.uniform(-RADIUS, RADIUS), 6)
-
-
-def generate_vehicles(n: int = 20, seed: int = None) -> list:
-    """Generate simulated vehicle positions around Chennai."""
-    rng = random.Random(seed) if seed else random.Random()
-    vehicles = []
-    for i in range(n):
-        vehicles.append({
-            "vehicle_id": f"VH-{str(i + 1).zfill(3)}",
-            "lat": _random_chennai_lat(rng),
-            "lng": _random_chennai_lng(rng),
-            "speed": round(rng.uniform(20, 100), 1),
-            "heading": round(rng.uniform(0, 360), 1),
-            "status": rng.choice(["MOVING", "MOVING", "MOVING", "STOPPED"]),
-        })
-    return vehicles
-
-
-def generate_incident(type: str = None, seed: int = None) -> dict:
-    """Generate a single incident dict."""
-    rng = random.Random(seed) if seed else random.Random()
-    inc_type = type or rng.choice(INCIDENT_TYPES)
-    severity = rng.choice(SEVERITIES)
-
-    descriptions = {
-        "CRASH": "Vehicle collision detected. Multiple vehicles involved.",
-        "FATIGUE": "Driver fatigue indicators detected: prolonged eye closure and head drooping.",
-        "SLOWDOWN": "Sudden traffic slowdown detected. Multiple vehicles decelerating rapidly.",
-        "STATIONARY": "Stationary vehicle detected blocking traffic lane.",
-        "WRONG_ROUTE": "Vehicle detected traveling in wrong direction on one-way road.",
-    }
-
-    return {
-        "type": inc_type,
-        "severity": severity,
-        "lat": _random_chennai_lat(rng),
-        "lng": _random_chennai_lng(rng),
-        "description": descriptions.get(inc_type, "Incident detected."),
-        "status": "ACTIVE",
-        "vehicle_id": f"VH-{rng.randint(1, 20):03d}",
-        "confidence": rng.choice(["LOW", "MEDIUM", "HIGH"]),
-    }
 
 
 def generate_traffic_signals(n: int = 15, seed: int = None) -> list:
-    """Generate traffic signal states using real Chennai intersections."""
+    """Generate traffic signal states using real Hyderabad intersections."""
+    import random
     rng = random.Random(seed) if seed else random.Random()
     signals = []
-    intersections = CHENNAI_INTERSECTIONS[:n]
+    intersections = HYDERABAD_INTERSECTIONS[:n]
     for i, intersection in enumerate(intersections):
         signals.append({
             "signal_id": f"SIG_{str(i + 1).zfill(3)}",
@@ -128,15 +75,11 @@ def generate_traffic_signals(n: int = 15, seed: int = None) -> list:
 
 
 def generate_bus_routes(seed: int = None) -> list:
-    """Generate 5 bus routes with realistic Chennai route names."""
-    rng = random.Random(seed) if seed else random.Random()
+    """Generate bus routes with real Hyderabad route data — zero delay by default."""
     routes = []
-    for route in CHENNAI_BUS_ROUTES:
-        # Start bus at a random waypoint along its route
-        wp_idx = rng.randint(0, len(route["waypoints"]) - 1)
-        wp = route["waypoints"][wp_idx]
-        delay = rng.choice([0, 0, 0, 5, 8, 12, -2])
-        status = "ON_TIME" if delay <= 0 else ("EARLY" if delay < 0 else "DELAYED")
+    for route in HYDERABAD_BUS_ROUTES:
+        # Start bus at the origin
+        wp = route["waypoints"][0]
         routes.append({
             "route_id": route["route_id"],
             "bus_id": route["bus_id"],
@@ -144,113 +87,71 @@ def generate_bus_routes(seed: int = None) -> list:
             "destination": route["destination"],
             "current_lat": wp[0],
             "current_lng": wp[1],
-            "delay_minutes": max(0, delay),
-            "status": status,
+            "delay_minutes": 0,
+            "status": "ON_TIME",
         })
     return routes
 
 
 def generate_risk_scores(n: int = 10, seed: int = None) -> list:
-    """Generate intersection risk scores."""
-    rng = random.Random(seed) if seed else random.Random()
+    """Generate initial intersection risk scores — all start at 0 (no risk until user reports)."""
     scores = []
-    intersections = CHENNAI_INTERSECTIONS[:n]
-    all_factors = [
-        "High traffic density",
-        "Frequent braking events",
-        "Poor visibility",
-        "Pedestrian crossing conflicts",
-        "Signal timing issues",
-        "Construction zone nearby",
-        "Waterlogging prone area",
-        "Sharp curves or blind spots",
-        "School/hospital zone",
-        "Heavy commercial vehicle traffic",
-    ]
+    intersections = HYDERABAD_INTERSECTIONS[:n]
     for i, intersection in enumerate(intersections):
-        score = rng.randint(20, 95)
-        n_factors = rng.randint(2, 4)
-        factors = rng.sample(all_factors, n_factors)
-        risk_level = "LOW" if score < 40 else ("MEDIUM" if score < 70 else ("HIGH" if score < 90 else "CRITICAL"))
         scores.append({
             "intersection_id": f"INT_{str(i + 1).zfill(3)}",
             "lat": intersection["lat"],
             "lng": intersection["lng"],
-            "score": score,
-            "factors": json.dumps(factors),
-            "risk_level": risk_level,
+            "score": 0,
+            "factors": json.dumps([]),
+            "risk_level": "LOW",
             "intersection_name": intersection["name"],
-            "recommendation": f"Deploy traffic calming measures at {intersection['name']}.",
+            "recommendation": "",
         })
     return scores
 
 
-def generate_historical_accidents(n: int = 200, seed: int = None) -> list:
-    """Generate historical accident data for heatmap seeding."""
-    rng = random.Random(seed) if seed else random.Random()
-    accidents = []
-    for _ in range(n):
-        # Cluster around known intersections with some randomness
-        base = rng.choice(CHENNAI_INTERSECTIONS)
-        accidents.append({
-            "type": rng.choice(INCIDENT_TYPES[:4]),  # Exclude WRONG_ROUTE for historical
-            "severity": rng.choice(SEVERITIES),
-            "lat": round(base["lat"] + rng.uniform(-0.005, 0.005), 6),
-            "lng": round(base["lng"] + rng.uniform(-0.005, 0.005), 6),
-            "description": f"Historical incident near {base['name']}",
-            "status": "RESOLVED",
-            "vehicle_id": f"VH-{rng.randint(1, 100):03d}",
-            "confidence": "HIGH",
-            "created_at": datetime.now(timezone.utc) - timedelta(days=rng.randint(1, 365)),
-        })
-    return accidents
-
-
 def generate_congestion_zones(seed: int = None) -> list:
-    """Generate mock congestion zone data."""
-    rng = random.Random(seed) if seed else random.Random()
-    zones = [
-        {"zone_id": "CZ_001", "name": "Anna Salai", "lat": 13.0604, "lng": 80.2496},
-        {"zone_id": "CZ_002", "name": "OMR IT Corridor", "lat": 12.9500, "lng": 80.2400},
-        {"zone_id": "CZ_003", "name": "Kathipara Junction", "lat": 13.0126, "lng": 80.2001},
-        {"zone_id": "CZ_004", "name": "T Nagar Shopping Area", "lat": 13.0418, "lng": 80.2341},
-        {"zone_id": "CZ_005", "name": "Central Station Area", "lat": 13.0826, "lng": 80.2754},
-        {"zone_id": "CZ_006", "name": "Velachery-Tambaram Corridor", "lat": 12.9815, "lng": 80.2185},
-    ]
-    result = []
-    for zone in zones:
-        level = rng.choice(["LOW", "MEDIUM", "HIGH"])
-        avg_speed = {"LOW": rng.randint(30, 45), "MEDIUM": rng.randint(15, 30), "HIGH": rng.randint(5, 15)}
-        result.append({
-            "zone_id": zone["zone_id"],
-            "name": zone["name"],
-            "lat": zone["lat"],
-            "lng": zone["lng"],
-            "radius_m": rng.randint(300, 800),
-            "level": level,
-            "avg_speed_kmh": avg_speed[level],
-            "vehicle_count": rng.randint(20, 200),
-        })
-    return result
+    """Return empty congestion zones — filled by real sensor/user data."""
+    return []
 
 
 def generate_emergency_resources(seed: int = None) -> dict:
-    """Generate mock emergency resources near Chennai."""
-    rng = random.Random(seed) if seed else random.Random()
+    """Return empty resource lists — filled by real dispatch data."""
+    return {
+        "ambulances": [],
+        "police": [],
+        "tow_trucks": [],
+    }
 
-    def _gen_resource(prefix, n, statuses):
-        return [{
-            "id": f"{prefix}_{str(i + 1).zfill(3)}",
-            "lat": _random_chennai_lat(rng),
-            "lng": _random_chennai_lng(rng),
-            "status": rng.choice(statuses),
-            "distance_km": round(rng.uniform(0.5, 15.0), 1),
-        } for i in range(n)]
+
+def generate_incident(type: str = None, seed: int = None) -> dict:
+    """Generate a single incident dict for simulation only (triggered by user)."""
+    import random
+    rng = random.Random(seed) if seed else random.Random()
+    inc_type = type or rng.choice(INCIDENT_TYPES)
+    severity = rng.choice(SEVERITIES)
+
+    # Pick a random real Hyderabad intersection
+    base = rng.choice(HYDERABAD_INTERSECTIONS)
+
+    descriptions = {
+        "CRASH": "Vehicle collision detected near " + base["name"] + ".",
+        "FATIGUE": "Driver fatigue indicators detected near " + base["name"] + ".",
+        "SLOWDOWN": "Traffic slowdown detected near " + base["name"] + ".",
+        "STATIONARY": "Stationary vehicle blocking lane near " + base["name"] + ".",
+        "WRONG_ROUTE": "Wrong-way vehicle detected near " + base["name"] + ".",
+    }
 
     return {
-        "ambulances": _gen_resource("AMB", 5, ["AVAILABLE", "AVAILABLE", "DISPATCHED", "AVAILABLE"]),
-        "police": _gen_resource("POL", 5, ["AVAILABLE", "AVAILABLE", "ON_DUTY", "AVAILABLE"]),
-        "tow_trucks": _gen_resource("TOW", 3, ["AVAILABLE", "AVAILABLE", "DISPATCHED"]),
+        "type": inc_type,
+        "severity": severity,
+        "lat": round(base["lat"] + rng.uniform(-0.005, 0.005), 6),
+        "lng": round(base["lng"] + rng.uniform(-0.005, 0.005), 6),
+        "description": descriptions.get(inc_type, "Incident detected."),
+        "status": "ACTIVE",
+        "vehicle_id": f"VH-{rng.randint(1, 100):03d}",
+        "confidence": rng.choice(["LOW", "MEDIUM", "HIGH"]),
     }
 
 
@@ -261,32 +162,25 @@ def _filter_model_fields(model_class, data: dict) -> dict:
 
 
 def seed_database(db_session):
-    """Seed the database with initial mock data if tables are empty."""
-    from db.models import Incident, Vehicle, TrafficSignal, BusRoute, RiskScore
+    """Seed the database with infrastructure data only (signals, routes, intersections).
+    NO fake incidents, NO fake vehicles, NO historical accidents."""
+    from db.models import TrafficSignal, BusRoute, RiskScore, Vehicle
 
     # Check if already seeded
-    if db_session.query(Vehicle).count() > 0:
+    if db_session.query(TrafficSignal).count() > 0:
         return False
 
-    # Seed vehicles
-    for v in generate_vehicles(20, seed=42):
-        db_session.add(Vehicle(**_filter_model_fields(Vehicle, v)))
-
-    # Seed traffic signals
+    # Seed traffic signals (real infrastructure)
     for s in generate_traffic_signals(15, seed=42):
         db_session.add(TrafficSignal(**_filter_model_fields(TrafficSignal, s)))
 
-    # Seed bus routes
+    # Seed bus routes (real infrastructure)
     for r in generate_bus_routes(seed=42):
         db_session.add(BusRoute(**_filter_model_fields(BusRoute, r)))
 
-    # Seed risk scores
+    # Seed risk scores with 0 (real intersections, no risk yet)
     for rs in generate_risk_scores(10, seed=42):
         db_session.add(RiskScore(**_filter_model_fields(RiskScore, rs)))
-
-    # Seed historical incidents
-    for inc in generate_historical_accidents(200, seed=42):
-        db_session.add(Incident(**_filter_model_fields(Incident, inc)))
 
     db_session.commit()
     return True

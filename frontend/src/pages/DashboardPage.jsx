@@ -67,7 +67,7 @@ export default function DashboardPage() {
       <div className="page-header" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <div className="page-title">LIVE SYSTEM FEED</div>
-          <div className="page-subtitle">Real-time monitoring • Chennai Metropolitan Area</div>
+          <div className="page-subtitle">Real-time monitoring • Hyderabad Metropolitan Area</div>
         </div>
       </div>
 
@@ -75,8 +75,8 @@ export default function DashboardPage() {
       <div className="stat-grid stat-grid-4">
         <div className="stat-card">
           <div className="stat-label">ACTIVE INCIDENTS</div>
-          <div className="stat-value">{String(avgScore).padStart(2, '0')}</div>
-          <div className="stat-sub">↑ {Math.floor(Math.random() * 15)}%</div>
+          <div className="stat-value">{String(sosReports.filter(s => s.status === 'ACTIVE' || s.status === 'RECEIVED').length).padStart(2, '0')}</div>
+          <div className="stat-sub">LIVE DATA</div>
           <div className="stat-icon">📊</div>
         </div>
         <div className="stat-card orange">
@@ -118,7 +118,7 @@ export default function DashboardPage() {
             <div className="map-overlay" style={{ top: 12, left: 12 }}>
               <div className="map-tag">
                 <div className="map-tag-label">LIVE COORDINATES</div>
-                <div className="map-tag-value">13.0827° N, 80.2707° E</div>
+                <div className="map-tag-value">17.3850° N, 78.4867° E</div>
               </div>
             </div>
 
