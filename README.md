@@ -1,6 +1,6 @@
 # IntelliMobility AI — Intelligent Transportation Safety Platform
 
-> **Powered by Google Gemini 2.5 Flash** | FastAPI + React + React Native  
+> **Powered by Google Gemini** | FastAPI + React + React Native  
 > Real-time AI-powered traffic incident detection, emergency response, and predictive analytics for Chennai, India.
 
 ---
@@ -296,9 +296,9 @@ TrafAi/
 
 ---
 
-## Data Models (Database Schema)
+-> Data Models (Database Schema)
 
-### 8 SQLAlchemy Models
+## 8 SQLAlchemy Models
 
 | Model | Table | Key Columns | Notes |
 |-------|-------|-------------|-------|
