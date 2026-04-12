@@ -3,7 +3,7 @@
 > **Powered by Google Gemini** | FastAPI + React + React Native  
 > Real-time AI-powered traffic incident detection, emergency response, and predictive analytics for Chennai, India.
 
----
+----------------------------------------------------------------------
 
 ## Table of Contents
 
