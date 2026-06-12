@@ -4,7 +4,7 @@
 > Real-time AI-powered traffic incident detection, emergency response, and predictive analytics for Chennai, India.
 
 ----------------------------------------------------------------------
-
+  
 #Table of Contents  
 
 1. [Architecture Overview](#architecture-overview)
