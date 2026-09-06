@@ -6,7 +6,7 @@
 ----------------------------------------------------------------------
    
 #Table of Contents       
-
+ 
 1. [Architecture Overview](#architecture-overview)
 2. [Tech Stack](#tech-stack)
 3. [Project Structure](#project-structure)
