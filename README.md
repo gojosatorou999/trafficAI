@@ -340,7 +340,7 @@ TrafAi/
 - **Model**: `gemini-2.0-flash`
 
 ---
-
+<div align = "right">
 ## WebSocket Events
 
 **Endpoint**: `ws://localhost:8000/ws/alerts`
@@ -395,7 +395,7 @@ All messages are JSON with this shape:
 | `useAlerts.js` | Connects to `ws://localhost:8000/ws/alerts`, returns `{alerts, latestNarrator}` |
 
 ---
-
+</div>
 ## Mobile App Screens
 
 | Tab | Screen | Features | Key API Calls |
